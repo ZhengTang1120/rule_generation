@@ -1,15 +1,14 @@
 import json
 
-train = json.load(open('rules_train.json'))
-dev = json.load(open('rules_dev_pred.json'))
+file = json.load(open('rules_train.json'))
 
 total = 0
 
-for relation in dev:
+for relation in file:
     with open('%s_unit.yml'%relation, 'w') as f:
         count = 0
-        for trigger in dev[relation]:
-            rules = [r for r in dev[relation][trigger]]
+        for trigger in file[relation]:
+            rules = [r for r in file[relation][trigger]]
             relation = relation.replace('/', '_slash_')
             for rule in rules:
                 f.write('''

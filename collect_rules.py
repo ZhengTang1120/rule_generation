@@ -1,4 +1,6 @@
 import json
+import csv
+import re
 from collections import defaultdict
 import networkx as nx
 from networkx.algorithms import community
@@ -35,13 +37,13 @@ def build_graph(d):
     return G, edge_dict
 
 
-def rules_with_out_golds(origin, model_output):
+def rules_with_out_golds(candidates, origin, model_output):
     # In this case, we do not have access to the gold labels, so we are relying on predicted labels
     assert(len(model_output)==len(origin))
     subjects = defaultdict(set)
     objects = defaultdict(set)
     d = defaultdict(set)
-    candidates = defaultdict(list)
+
     for i, item in enumerate(model_output):
         g, e = build_graph(origin[i])
         tokens = ['ROOT'] + origin[i]['token']
@@ -88,15 +90,15 @@ def rules_with_out_golds(origin, model_output):
                     if l not in candidates[item['predicted_label']] and len(triggers)<=3 and len(sp)!=0 and len(op)!=0:
                         candidates[item['gold_label']] += [l]
 
-    return candidates
+    return candidates, subjects, objects
 
-def rules_with_corrects(origin, model_output):
+def rules_with_corrects(candidates, origin, model_output):
     # In this case, we have access to gold labels
     assert(len(model_output)==len(origin))
     subjects = defaultdict(set)
     objects = defaultdict(set)
     d = defaultdict(set)
-    candidates = defaultdict(list)
+    
     for i, item in enumerate(model_output):
         g, e = build_graph(origin[i])
         tokens = ['ROOT'] + origin[i]['token']
@@ -143,9 +145,9 @@ def rules_with_corrects(origin, model_output):
                     if l not in candidates[item['gold_label']] and len(triggers)<=3 and len(sp)!=0 and len(op)!=0:
                         candidates[item['gold_label']] += [l]
 
-    return candidates
+    return candidates, subjects, objects
 
-def save_rule_dict(candidates, saved_dir):
+def save_rule_dict(candidates, subjects, objects, name):
                 
     output = dict()
     total = 0
@@ -160,8 +162,10 @@ def save_rule_dict(candidates, saved_dir):
 
             output[label][trigger].append({'subj':subj, 'obj':obj})
             total += 1
-    # print (total)
-    print (json.dumps(output))
+    print ("Generated %d rules."%total)
+    
+    with open('rules_%s'%name) as f:
+        f.write(json.dumps(output))
 
 
 
@@ -173,23 +177,29 @@ def save_rule_dict(candidates, saved_dir):
                     subj = subj[0]+subj[1:].lower()
                     obj = obj[0]+obj[1:].lower()
                     f.write('''
-      - import: grammars_dev_pred/%s.yml
-        vars:
-          label: %s
-          rulepriority: "3+"
-          subject_type: SUBJ_%s
-          object_type: OBJ_%s
-          count: "%d"
-      '''%(label.replace('/', '_slash_')+'_unit', label, subj, obj, count))
+  - import: grammars_%s/%s.yml
+    vars:
+      label: %s
+      rulepriority: "3+"
+      subject_type: SUBJ_%s
+      object_type: OBJ_%s
+      count: "%d"
+  '''%(name, label.replace('/', '_slash_')+'_unit', label, subj, obj, count))
                     count += 1
 
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('/Users/zheng/Documents/GitHub/tacred_odin/output_02_dev_best_model.json'))
-    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/dev.json'))
+    model_output = json.load(open('/Users/zheng/Documents/GitHub/tacred_odin/output_chunks_best_model_2.json'))
+    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/train.json'))
 
-    
+    candidates = defaultdict(list)
+
+    candidates, subjects, objects = rules_with_out_golds(candidates, origin, model_output)
+
+    save_rule_dict(candidates, subjects, objects)
+
+
 
 
 
