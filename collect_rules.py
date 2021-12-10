@@ -11,6 +11,8 @@ from itertools import combinations
 
 import numpy as np
 
+from termcolor import colored
+
 
 tags = dict()
 with open('tags.csv', newline='') as csvfile:
@@ -50,10 +52,10 @@ def rules_with_out_golds(candidates, origin, model_output):
         postags = ['ROOT'] + origin[i]['stanford_pos']
         
         if item['predicted_label'] != 'no_relation':#== item['gold_label']:#
-            if sum(item['predicted_tags']) != 0 and sum(item['gold_tags']) == 0:
-                subj = [i for i, w in enumerate(item['raw_words']) if item['subj'][i]==1]
-                obj = [i for i, w in enumerate(item['raw_words']) if item['obj'][i]==1]
-                triggers = [i for i, w in enumerate(item['raw_words']) if item['predicted_tags'][i] == 1 and item['subj'][i]!=1 and item['obj'][i]!=1 and i!=0]
+            if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
+                subj = list(range(origin[i]['subj_start'], origin[i]['subj_end']+1))
+                obj = list(range(origin[i]['obj_start'], origin[i]['obj_end']+1))
+                triggers = [j for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
                 if triggers:
                     sp = []
                     op = []
@@ -103,12 +105,18 @@ def rules_with_corrects(candidates, origin, model_output):
         g, e = build_graph(origin[i])
         tokens = ['ROOT'] + origin[i]['token']
         postags = ['ROOT'] + origin[i]['stanford_pos']
-        
+        # if len(item['predicted_tags']) != 0:
+        #     ts = origin[i]['token']
+        #     ts = [colored(w, "blue") if j in list(range(origin[i]['subj_start'], origin[i]['subj_end']+1)) else w for j, w in enumerate(ts)]
+        #     ts = [colored(w, "yellow") if j in list(range(origin[i]['obj_start'], origin[i]['obj_end']+1)) else w for j, w in enumerate(ts)]
+        #     ts = [colored(w, "red") if j in item['predicted_tags'] else w for j, w in enumerate(ts)]
+        #     print (' '.join(ts))
+        # continue
         if item['predicted_label'] == item['gold_label']:
-            if sum(item['predicted_tags']) != 0 and sum(item['gold_tags']) == 0:
-                subj = [i for i, w in enumerate(item['raw_words']) if item['subj'][i]==1]
-                obj = [i for i, w in enumerate(item['raw_words']) if item['obj'][i]==1]
-                triggers = [i for i, w in enumerate(item['raw_words']) if item['predicted_tags'][i] == 1 and item['subj'][i]!=1 and item['obj'][i]!=1 and i!=0]
+            if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
+                subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
+                obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
+                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
                 if triggers:
                     sp = []
                     op = []
@@ -164,7 +172,7 @@ def save_rule_dict(candidates, subjects, objects, name):
             total += 1
     print ("Generated %d rules."%total)
     
-    with open('rules_%s'%name) as f:
+    with open('rules_%s.json'%name, 'w') as f:
         f.write(json.dumps(output))
 
 
@@ -190,14 +198,14 @@ def save_rule_dict(candidates, subjects, objects, name):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('/Users/zheng/Documents/GitHub/tacred_odin/output_chunks_best_model_2.json'))
+    model_output = json.load(open('output_132_train_best_model_10.json'))
     origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/train.json'))
 
     candidates = defaultdict(list)
 
-    candidates, subjects, objects = rules_with_out_golds(candidates, origin, model_output)
+    candidates, subjects, objects = rules_with_corrects(candidates, origin, model_output)
 
-    save_rule_dict(candidates, subjects, objects)
+    save_rule_dict(candidates, subjects, objects, "new_train")
 
 
 
