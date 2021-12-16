@@ -42,20 +42,22 @@ def build_graph(d):
 def rules_with_out_golds(candidates, origin, model_output):
     # In this case, we do not have access to the gold labels, so we are relying on predicted labels
     assert(len(model_output)==len(origin))
-    subjects = defaultdict(set)
-    objects = defaultdict(set)
-    d = defaultdict(set)
-
+    subjects = defaultdict(list)
+    objects = defaultdict(list)
+    lineid2rule = defaultdict(dict) 
     for i, item in enumerate(model_output):
         g, e = build_graph(origin[i])
         tokens = ['ROOT'] + origin[i]['token']
         postags = ['ROOT'] + origin[i]['stanford_pos']
-        
-        if item['predicted_label'] != 'no_relation':#== item['gold_label']:#
+        if item['predicted_label'].startswith('per'):
+            subj_type = 'PERSON'
+        else:
+            subj_type = 'ORGANIZATION'
+        if item['predicted_label'] != 'no_relation' and subj_type == origin[i]['subj_type']:#== item['gold_label']:#
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
-                subj = list(range(origin[i]['subj_start'], origin[i]['subj_end']+1))
-                obj = list(range(origin[i]['obj_start'], origin[i]['obj_end']+1))
-                triggers = [j for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
+                subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
+                obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
+                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
                 if triggers:
                     sp = []
                     op = []
@@ -74,9 +76,10 @@ def rules_with_out_golds(candidates, origin, model_output):
                                         sp = temp1
                                         op = temp2
                                         trigger_head = t
-
-                    subjects[item['predicted_label']].add(origin[i]['subj_type'])
-                    objects[item['predicted_label']].add(origin[i]['obj_type']) 
+                    if origin[i]['subj_type'] not in subjects[item['predicted_label']]:
+                        subjects[item['predicted_label']].append(origin[i]['subj_type'])
+                    if origin[i]['obj_type'] not in objects[item['predicted_label']]:
+                        objects[item['predicted_label']].append(origin[i]['obj_type']) 
                     trigger = ''
                     prev = -1
                     for j in triggers:
@@ -89,10 +92,16 @@ def rules_with_out_golds(candidates, origin, model_output):
                         prev = j
                         
                     l = [trigger, [postags[j] for j in triggers], [e[sp[j]][sp[j+1]] for j in range(len(sp)-1)], [e[op[j]][op[j+1]] for j in range(len(op)-1)]]
+                    
                     if l not in candidates[item['predicted_label']] and len(triggers)<=3 and len(sp)!=0 and len(op)!=0:
-                        candidates[item['gold_label']] += [l]
+                        candidates[item['predicted_label']] += [l]
+                    if len(triggers)<=3 and len(sp)!=0 and len(op)!=0:
+                        if candidates[item['predicted_label']].index(l) in lineid2rule[item['predicted_label']]:
+                            lineid2rule[item['predicted_label']][candidates[item['predicted_label']].index(l)].append(i)
+                        else:
+                            lineid2rule[item['predicted_label']][candidates[item['predicted_label']].index(l)] = [i]
 
-    return candidates, subjects, objects
+    return candidates, subjects, objects, lineid2rule
 
 def rules_with_corrects(candidates, origin, model_output):
     # In this case, we have access to gold labels
@@ -105,13 +114,14 @@ def rules_with_corrects(candidates, origin, model_output):
         g, e = build_graph(origin[i])
         tokens = ['ROOT'] + origin[i]['token']
         postags = ['ROOT'] + origin[i]['stanford_pos']
-        # if len(item['predicted_tags']) != 0:
-        #     ts = origin[i]['token']
-        #     ts = [colored(w, "blue") if j in list(range(origin[i]['subj_start'], origin[i]['subj_end']+1)) else w for j, w in enumerate(ts)]
-        #     ts = [colored(w, "yellow") if j in list(range(origin[i]['obj_start'], origin[i]['obj_end']+1)) else w for j, w in enumerate(ts)]
-        #     ts = [colored(w, "red") if j in item['predicted_tags'] else w for j, w in enumerate(ts)]
-        #     print (' '.join(ts))
-        # continue
+        # if item['predicted_label'] != 'no_relation':
+        #     print (len(item['predicted_tags']))
+            # ts = origin[i]['token']
+            # ts = [colored(w, "blue") if j in list(range(origin[i]['subj_start'], origin[i]['subj_end']+1)) else w for j, w in enumerate(ts)]
+            # ts = [colored(w, "yellow") if j in list(range(origin[i]['obj_start'], origin[i]['obj_end']+1)) else w for j, w in enumerate(ts)]
+            # ts = [colored(w, "red") if j in item['predicted_tags'] else w for j, w in enumerate(ts)]
+            # print (' '.join(ts))
+        continue
         if item['predicted_label'] == item['gold_label']:
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
                 subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
@@ -155,28 +165,38 @@ def rules_with_corrects(candidates, origin, model_output):
 
     return candidates, subjects, objects
 
-def save_rule_dict(candidates, subjects, objects, name):
-                
+def save_rule_dict(candidates, subjects, objects, name, lineid2rule):
+    res = defaultdict(dict)    
     output = dict()
     total = 0
     for label in candidates:
         cands = candidates[label]
+        temp = lineid2rule[label]
         label = label.replace('/', '_slash_')
         output[label] = defaultdict(list)
-        for c in cands:
+        for i, c in enumerate(cands):
             trigger = c[0]
             subj = c[2]
             obj = c[3]
-
-            output[label][trigger].append({'subj':subj, 'obj':obj})
-            total += 1
+            if len(subj)>0 and len(obj)>0:
+                output[label][trigger].append({'subj':subj, 'obj':obj, 'xxx':temp[i]})
+                total += 1
+    for label in output:
+        label2 = label.replace('_slash_', '/')
+        temp = lineid2rule[label2]
+        count = 0
+        for trigger in output[label]:
+            for rule in output[label][trigger]:
+                for li in rule['xxx']:
+                    res[label][li] = count
+                count += 1
     print ("Generated %d rules."%total)
-    
+    print (json.dumps(res))
     with open('rules_%s.json'%name, 'w') as f:
         f.write(json.dumps(output))
 
 
-
+    sod = defaultdict(dict)
     with open('master.yml','w') as f:
         for label in subjects:
             count = 0
@@ -184,6 +204,7 @@ def save_rule_dict(candidates, subjects, objects, name):
                 for obj in objects[label]:
                     subj = subj[0]+subj[1:].lower()
                     obj = obj[0]+obj[1:].lower()
+                    sod[label][subj+obj] = count
                     f.write('''
   - import: grammars_%s/%s.yml
     vars:
@@ -194,18 +215,18 @@ def save_rule_dict(candidates, subjects, objects, name):
       count: "%d"
   '''%(name, label.replace('/', '_slash_')+'_unit', label, subj, obj, count))
                     count += 1
-
+    print (json.dumps(sod))
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_132_train_best_model_10.json'))
+    model_output = json.load(open('output_chunk_train.json'))
     origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/train.json'))
 
     candidates = defaultdict(list)
 
     candidates, subjects, objects = rules_with_corrects(candidates, origin, model_output)
 
-    save_rule_dict(candidates, subjects, objects, "new_train")
+    save_rule_dict(candidates, subjects, objects, "new_train", lineid2rule)
 
 
 

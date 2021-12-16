@@ -1,11 +1,13 @@
 import json
 
-file = json.load(open('rules_train.json'))
-good_rules = json.load(open('rules_w_prec_greater_60.json'))
+file = json.load(open('rules_new_dev.json'))
+good_rules = None#json.load(open('rules_w_prec_greater_60_new.json'))
 
 total = 0
 
 for relation in file:
+    # if relation.replace('_slash_', '/') not in good_rules:
+    #     print ("remove: ", relation)
     if good_rules and relation.replace('_slash_', '/') not in good_rules:
         # print (file[relation])
         continue
