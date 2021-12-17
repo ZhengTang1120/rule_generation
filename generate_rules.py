@@ -1,13 +1,13 @@
 import json
 
-file = json.load(open('rules_train.json'))
-good_rules = json.load(open('rules_w_prec_greater_60.json'))
+file = json.load(open('rules_new_train.json'))
+good_rules = json.load(open('rules_w_prec_greater_60_new.json'))
 
 total = 0
 
 for relation in file:
     if good_rules and relation.replace('_slash_', '/') not in good_rules:
-        # print (file[relation])
+        print (relation)
         continue
     if good_rules:
         current_rules = sorted(good_rules[relation.replace('_slash_', '/')], key=lambda k: len(good_rules[relation.replace('_slash_', '/')][k]), reverse=True)

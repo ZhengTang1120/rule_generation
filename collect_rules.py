@@ -167,9 +167,9 @@ def save_rule_dict(candidates, subjects, objects, name):
             trigger = c[0]
             subj = c[2]
             obj = c[3]
-
-            output[label][trigger].append({'subj':subj, 'obj':obj})
-            total += 1
+            if len(subj)>0 and len(obj) > 0:
+                output[label][trigger].append({'subj':subj, 'obj':obj})
+                total += 1
     print ("Generated %d rules."%total)
     
     with open('rules_%s.json'%name, 'w') as f:
@@ -198,14 +198,14 @@ def save_rule_dict(candidates, subjects, objects, name):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_132_train_best_model_10.json'))
-    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/train.json'))
+    model_output = json.load(open('output_132_test_best_model_10.json'))
+    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/test.json'))
 
     candidates = defaultdict(list)
 
     candidates, subjects, objects = rules_with_corrects(candidates, origin, model_output)
 
-    save_rule_dict(candidates, subjects, objects, "new_train")
+    save_rule_dict(candidates, subjects, objects, "test_pred")
 
 
 
