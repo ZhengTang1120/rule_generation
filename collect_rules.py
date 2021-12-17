@@ -114,13 +114,12 @@ def rules_with_corrects(candidates, origin, model_output):
         g, e = build_graph(origin[i])
         tokens = ['ROOT'] + origin[i]['token']
         postags = ['ROOT'] + origin[i]['stanford_pos']
-        # if item['predicted_label'] != 'no_relation':
-        #     print (len(item['predicted_tags']))
-            # ts = origin[i]['token']
-            # ts = [colored(w, "blue") if j in list(range(origin[i]['subj_start'], origin[i]['subj_end']+1)) else w for j, w in enumerate(ts)]
-            # ts = [colored(w, "yellow") if j in list(range(origin[i]['obj_start'], origin[i]['obj_end']+1)) else w for j, w in enumerate(ts)]
-            # ts = [colored(w, "red") if j in item['predicted_tags'] else w for j, w in enumerate(ts)]
-            # print (' '.join(ts))
+        if item['predicted_label'] != 'no_relation':
+            ts = origin[i]['token']
+            ts = [colored(w, "blue") if j in list(range(origin[i]['subj_start'], origin[i]['subj_end']+1)) else w for j, w in enumerate(ts)]
+            ts = [colored(w, "yellow") if j in list(range(origin[i]['obj_start'], origin[i]['obj_end']+1)) else w for j, w in enumerate(ts)]
+            ts = [colored(w, "red") if j in item['predicted_tags'] else w for j, w in enumerate(ts)]
+            print (' '.join(ts))
         continue
         if item['predicted_label'] == item['gold_label']:
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
@@ -219,14 +218,14 @@ def save_rule_dict(candidates, subjects, objects, name, lineid2rule):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_chunk_train.json'))
-    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/train.json'))
+    model_output = json.load(open('output_132_test_best_model_10.json'))
+    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/test.json'))
 
     candidates = defaultdict(list)
 
-    candidates, subjects, objects = rules_with_corrects(candidates, origin, model_output)
+    candidates, subjects, objects, lineid2rule = rules_with_out_golds(candidates, origin, model_output)
 
-    save_rule_dict(candidates, subjects, objects, "new_train", lineid2rule)
+    save_rule_dict(candidates, subjects, objects, "new_test", lineid2rule)
 
 
 

@@ -1,6 +1,6 @@
 import json
 
-file = json.load(open('rules_new_dev.json'))
+file = json.load(open('rules_new_test.json'))
 good_rules = None#json.load(open('rules_w_prec_greater_60_new.json'))
 
 total = 0
