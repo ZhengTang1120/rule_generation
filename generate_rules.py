@@ -1,7 +1,7 @@
 import json
 
-file = json.load(open('rules_new_train.json'))
-good_rules = json.load(open('rules_w_prec_greater_60_new.json'))
+file = json.load(open('rules_train_dev.json'))
+good_rules = json.load(open('rules_w_prec_greater_60.json'))
 
 total = 0
 
