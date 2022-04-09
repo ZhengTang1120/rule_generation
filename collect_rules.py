@@ -52,7 +52,7 @@ def rules_with_out_golds(candidates, origin, model_output):
         postags = ['ROOT'] + origin[i]['stanford_pos']
         
         if item['predicted_label'] != 'no_relation':#== item['gold_label']:#
-            if len(item['predicted_tags']) != 0:
+            if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
                 subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
                 obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
                 triggers = [j for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j+1 not in subj and j+1 not in obj]
