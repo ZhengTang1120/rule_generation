@@ -53,10 +53,10 @@ def rules_with_out_golds(candidates, origin, model_output):
             subj_type = 'PERSON'
         else:
             subj_type = 'ORGANIZATION'
-        if item['predicted_label'] != 'no_relation' and subj_type == origin[i]['subj_type']:#== item['gold_label']:#
+        if item['predicted_label'] != 'no_relation':# and subj_type == origin[i]['subj_type']:#== item['gold_label']:#
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
-                subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
-                obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
+                subj = list(range(origin[i]['subj_start'], origin[i]['subj_end']+1))
+                obj = list(range(origin[i]['obj_start'], origin[i]['obj_end']+1))
                 triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
                 if triggers:
                     sp = []
@@ -67,15 +67,15 @@ def rules_with_out_golds(candidates, origin, model_output):
                     # sp = nx.shortest_paths(g, source=trigger_head, target=subj_head)
                     # op = nx.shortest_paths(g, source=trigger_head, target=obj_head)
                     for t in triggers:
-                        if re.match(tags[item['predicted_label']], postags[t]):
-                            for s in subj:
-                                temp1 = nx.shortest_path(g, t, s)
-                                for o in obj:
-                                    temp2 = nx.shortest_path(g, t, o)
-                                    if len(temp1+temp2)<len(sp+op) or sp == []:
-                                        sp = temp1
-                                        op = temp2
-                                        trigger_head = t
+                        # if re.match(tags[item['predicted_label']], postags[t]):
+                        for s in subj:
+                            temp1 = nx.shortest_path(g, t, s)
+                            for o in obj:
+                                temp2 = nx.shortest_path(g, t, o)
+                                if len(temp1+temp2)<len(sp+op) or sp == []:
+                                    sp = temp1
+                                    op = temp2
+                                    trigger_head = t
                     if origin[i]['subj_type'] not in subjects[item['predicted_label']]:
                         subjects[item['predicted_label']].append(origin[i]['subj_type'])
                     if origin[i]['obj_type'] not in objects[item['predicted_label']]:
@@ -123,8 +123,8 @@ def rules_with_corrects(candidates, origin, model_output):
         continue
         if item['predicted_label'] == item['gold_label']:
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
-                subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
-                obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
+                subj = list(range(origin[i]['subj_start'], origin[i]['subj_end']+1))
+                obj = list(range(origin[i]['obj_start'], origin[i]['obj_end']+1))
                 triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
                 if triggers:
                     sp = []
@@ -135,15 +135,15 @@ def rules_with_corrects(candidates, origin, model_output):
                     # sp = nx.shortest_paths(g, source=trigger_head, target=subj_head)
                     # op = nx.shortest_paths(g, source=trigger_head, target=obj_head)
                     for t in triggers:
-                        if re.match(tags[item['gold_label']], postags[t]):
-                            for s in subj:
-                                temp1 = nx.shortest_path(g, t, s)
-                                for o in obj:
-                                    temp2 = nx.shortest_path(g, t, o)
-                                    if len(temp1+temp2)<len(sp+op) or sp == []:
-                                        sp = temp1
-                                        op = temp2
-                                        trigger_head = t
+                        # if re.match(tags[item['gold_label']], postags[t]):
+                        for s in subj:
+                            temp1 = nx.shortest_path(g, t, s)
+                            for o in obj:
+                                temp2 = nx.shortest_path(g, t, o)
+                                if len(temp1+temp2)<len(sp+op) or sp == []:
+                                    sp = temp1
+                                    op = temp2
+                                    trigger_head = t
 
                     subjects[item['gold_label']].add(origin[i]['subj_type'])
                     objects[item['gold_label']].add(origin[i]['obj_type']) 
@@ -218,14 +218,14 @@ def save_rule_dict(candidates, subjects, objects, name, lineid2rule):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_132_test_best_model_10.json'))
-    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/test.json'))
+    model_output = json.load(open('output_779_conll04_test_tacred_best_model_14.json'))
+    origin = json.load(open('/Users/zheng/Documents/GitHub/tacred_odin/src/main/resources/data/conll04_test_tacred.json'))
 
     candidates = defaultdict(list)
 
     candidates, subjects, objects, lineid2rule = rules_with_out_golds(candidates, origin, model_output)
 
-    save_rule_dict(candidates, subjects, objects, "new_test", lineid2rule)
+    save_rule_dict(candidates, subjects, objects, "conll04_test", lineid2rule)
 
 
 
