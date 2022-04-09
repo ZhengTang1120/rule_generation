@@ -57,7 +57,7 @@ def rules_with_out_golds(candidates, origin, model_output):
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
                 subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
                 obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
-                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
+                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j+1 not in subj and j+1 not in obj]
                 if triggers:
                     sp = []
                     op = []
@@ -114,18 +114,18 @@ def rules_with_corrects(candidates, origin, model_output):
         g, e = build_graph(origin[i])
         tokens = ['ROOT'] + origin[i]['token']
         postags = ['ROOT'] + origin[i]['stanford_pos']
-        if item['predicted_label'] != 'no_relation':
-            ts = origin[i]['token']
-            ts = [colored(w, "blue") if j in list(range(origin[i]['subj_start'], origin[i]['subj_end']+1)) else w for j, w in enumerate(ts)]
-            ts = [colored(w, "yellow") if j in list(range(origin[i]['obj_start'], origin[i]['obj_end']+1)) else w for j, w in enumerate(ts)]
-            ts = [colored(w, "red") if j in item['predicted_tags'] else w for j, w in enumerate(ts)]
-            print (' '.join(ts))
-        continue
+        # if item['predicted_label'] != 'no_relation':
+        #     ts = origin[i]['token']
+        #     ts = [colored(w, "blue") if j in list(range(origin[i]['subj_start'], origin[i]['subj_end']+1)) else w for j, w in enumerate(ts)]
+        #     ts = [colored(w, "yellow") if j in list(range(origin[i]['obj_start'], origin[i]['obj_end']+1)) else w for j, w in enumerate(ts)]
+        #     ts = [colored(w, "red") if j in item['predicted_tags'] else w for j, w in enumerate(ts)]
+        #     print (' '.join(ts))
+        # continue
         if item['predicted_label'] == item['gold_label']:
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
                 subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
                 obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
-                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
+                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j+1 not in subj and j+1 not in obj]
                 if triggers:
                     sp = []
                     op = []
@@ -218,14 +218,14 @@ def save_rule_dict(candidates, subjects, objects, name, lineid2rule):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_132_test_best_model_10.json'))
+    model_output = json.load(open('output_665_test_best_model_9.json'))
     origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/test.json'))
 
     candidates = defaultdict(list)
 
     candidates, subjects, objects, lineid2rule = rules_with_out_golds(candidates, origin, model_output)
 
-    save_rule_dict(candidates, subjects, objects, "new_test", lineid2rule)
+    save_rule_dict(candidates, subjects, objects, "test", lineid2rule)
 
 
 
