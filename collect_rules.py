@@ -55,9 +55,9 @@ def rules_with_out_golds(candidates, origin, model_output):
             subj_type = 'ORGANIZATION'
         if item['predicted_label'] != 'no_relation':# and subj_type == origin[i]['subj_type']:#== item['gold_label']:#
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
-                subj = list(range(origin[i]['subj_start'], origin[i]['subj_end']+1))
-                obj = list(range(origin[i]['obj_start'], origin[i]['obj_end']+1))
-                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
+                subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
+                obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
+                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j+1 not in subj and j+1 not in obj]
                 if triggers:
                     sp = []
                     op = []
@@ -123,9 +123,9 @@ def rules_with_corrects(candidates, origin, model_output):
         continue
         if item['predicted_label'] == item['gold_label']:
             if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
-                subj = list(range(origin[i]['subj_start'], origin[i]['subj_end']+1))
-                obj = list(range(origin[i]['obj_start'], origin[i]['obj_end']+1))
-                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j not in subj and j not in obj]
+                subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
+                obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
+                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j+1 not in subj and j+1 not in obj]
                 if triggers:
                     sp = []
                     op = []
