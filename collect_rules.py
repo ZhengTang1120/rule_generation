@@ -164,13 +164,12 @@ def rules_with_corrects(candidates, origin, model_output):
 
     return candidates, subjects, objects
 
-def save_rule_dict(candidates, subjects, objects, name, lineid2rule):
+def save_rule_dict(candidates, subjects, objects, name):
     res = defaultdict(dict)    
     output = dict()
     total = 0
     for label in candidates:
         cands = candidates[label]
-        temp = lineid2rule[label]
         label = label.replace('/', '_slash_')
         output[label] = defaultdict(list)
         for i, c in enumerate(cands):
@@ -178,19 +177,15 @@ def save_rule_dict(candidates, subjects, objects, name, lineid2rule):
             subj = c[2]
             obj = c[3]
             if len(subj)>0 and len(obj)>0:
-                output[label][trigger].append({'subj':subj, 'obj':obj, 'xxx':temp[i]})
+                output[label][trigger].append({'subj':subj, 'obj':obj})
                 total += 1
     for label in output:
         label2 = label.replace('_slash_', '/')
-        temp = lineid2rule[label2]
         count = 0
         for trigger in output[label]:
             for rule in output[label][trigger]:
-                for li in rule['xxx']:
-                    res[label][li] = count
                 count += 1
     print ("Generated %d rules."%total)
-    print (json.dumps(res))
     with open('rules_%s.json'%name, 'w') as f:
         f.write(json.dumps(output))
 
@@ -218,14 +213,14 @@ def save_rule_dict(candidates, subjects, objects, name, lineid2rule):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_665_test_best_model_9.json'))
-    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/test.json'))
+    model_output = json.load(open('output_665_train_best_model_9.json'))
+    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/train.json'))
 
     candidates = defaultdict(list)
 
-    candidates, subjects, objects, lineid2rule = rules_with_out_golds(candidates, origin, model_output)
+    candidates, subjects, objects = rules_with_corrects(candidates, origin, model_output)
 
-    save_rule_dict(candidates, subjects, objects, "test", lineid2rule)
+    save_rule_dict(candidates, subjects, objects, "train")
 
 
 
