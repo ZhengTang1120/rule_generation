@@ -38,6 +38,56 @@ def build_graph(d):
         edge_dict[i][heads[i-1]] = "<"+deprel[i-1]
     return G, edge_dict
 
+def trigger_stats(candidates, origin, model_output):
+    d = defaultdict(dict)
+    l = 0
+    c = 0
+    assert(len(model_output)==len(origin))
+    subjects = defaultdict(list)
+    objects = defaultdict(list)
+    lineid2rule = defaultdict(dict) 
+    for i, item in enumerate(model_output):
+        g, e = build_graph(origin[i])
+        tokens = ['ROOT'] + origin[i]['token']
+        postags = ['ROOT'] + origin[i]['stanford_pos']
+        if item['predicted_label'] != 'no_relation':
+            if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
+                c += 1
+                subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
+                obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
+                triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j+1 not in subj and j+1 not in obj]
+                trigger = ''
+                prev = -1
+                l += len(triggers)
+                for j in triggers:
+                    if "VB" in postags[j]:
+                        tag = "VB*"
+                    elif "NN" in postags[j]:
+                        tag = "NN*"
+                    else:
+                        tag = postags[j]
+                    if tag in d[item['predicted_label']]:
+                        d[item['predicted_label']][tag] += 1
+                    else:
+                        d[item['predicted_label']][tag] = 1
+                #     if prev == -1:
+                #         trigger += '"%s"'%tokens[j]
+                #     elif j - prev == 1:
+                #         trigger += ' ' + '"%s"'%tokens[j]
+                #     else:
+                #         trigger += '(/.+/)*' + '"%s"'%tokens[j]
+                #     prev = j
+                # print (trigger)
+    print (l/c)
+    # res = dict()
+    # for x in d:
+    #     res[x] = {k: v for k, v in sorted(d[x].items(), key=lambda item: item[1], reverse=True)[:5]}
+    # ans = defaultdict(int)
+    # for x in d:
+    #     for l in d[x]:
+    #         if d[x][l] >= 10:
+    #             ans[l] += 1
+    # print (json.dumps({k: v for k, v in sorted(ans.items(), key=lambda item: item[1], reverse=True)}))
 
 def rules_with_out_golds(candidates, origin, model_output):
     # In this case, we do not have access to the gold labels, so we are relying on predicted labels
@@ -213,14 +263,16 @@ def save_rule_dict(candidates, subjects, objects, name):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_665_train_best_model_9.json'))
-    origin = json.load(open('/Users/zheng/Documents/GitHub/syn-GCN/tacred/data/json/train.json'))
+    model_output = json.load(open('output_777_conll04_test_tacred_best_model_17.json'))
+    origin = json.load(open('/Users/zheng/Documents/GitHub/tacred_odin/src/main/resources/data/conll04_test_tacred.json'))
 
     candidates = defaultdict(list)
 
-    candidates, subjects, objects = rules_with_corrects(candidates, origin, model_output)
+    trigger_stats(candidates, origin, model_output)
 
-    save_rule_dict(candidates, subjects, objects, "train")
+    # candidates, subjects, objects = rules_with_out_golds(candidates, origin, model_output)
+
+    # save_rule_dict(candidates, subjects, objects, "rules_conll04_test2")
 
 
 
