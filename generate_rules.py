@@ -1,6 +1,6 @@
 import json
 
-file = json.load(open('rules_new_test.json'))
+file = json.load(open('rules_test_no_filter_new.json'))
 good_rules = None#json.load(open('rules_w_prec_greater_60_new.json'))
 
 total = 0
@@ -22,7 +22,8 @@ for relation in file:
             relation = relation.replace('/', '_slash_')
     
             for rule in rules:
-                if good_rules==None or count in good_rules[relation.replace('_slash_', '/')][current_rules[0]]:
+                # if good_rules==None or count in good_rules[relation.replace('_slash_', '/')][current_rules[0]]:
+                try:
                     f.write('''
 - name: ${label}_${count}_%d
   label: ${label}
@@ -32,6 +33,8 @@ for relation in file:
     subject: ${subject_type} = %s
     object: ${object_type} = %s\n'''%(count, trigger, ' '.join(rule['subj']), ' '.join(rule['obj'])))
                     total += 1
+                except UnicodeEncodeError:
+                    pass
                 if good_rules and len(current_rules)>1:
                     for c in current_rules[1:]:
                         if count in good_rules[relation.replace('_slash_', '/')][c]:
