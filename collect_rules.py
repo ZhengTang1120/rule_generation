@@ -78,16 +78,16 @@ def trigger_stats(candidates, origin, model_output):
                 #         trigger += '(/.+/)*' + '"%s"'%tokens[j]
                 #     prev = j
                 # print (trigger)
-    print (l/c)
+    # print (l/c)
     # res = dict()
     # for x in d:
     #     res[x] = {k: v for k, v in sorted(d[x].items(), key=lambda item: item[1], reverse=True)[:5]}
-    # ans = defaultdict(int)
-    # for x in d:
-    #     for l in d[x]:
-    #         if d[x][l] >= 10:
-    #             ans[l] += 1
-    # print (json.dumps({k: v for k, v in sorted(ans.items(), key=lambda item: item[1], reverse=True)}))
+    ans = defaultdict(int)
+    for x in d:
+        for l in d[x]:
+            if d[x][l] >= 10:
+                ans[l] += 1
+    print (json.dumps({k: v for k, v in sorted(ans.items(), key=lambda item: item[1], reverse=True)}))
 
 def rules_with_out_golds(candidates, origin, model_output):
     # In this case, we do not have access to the gold labels, so we are relying on predicted labels
@@ -263,8 +263,8 @@ def save_rule_dict(candidates, subjects, objects, name):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_777_conll04_test_tacred_best_model_17.json'))
-    origin = json.load(open('/Users/zheng/Documents/GitHub/tacred_odin/src/main/resources/data/conll04_test_tacred.json'))
+    model_output = json.load(open('output_tagging_01_test_best_model.json'))
+    origin = json.load(open('/Users/zheng/Documents/GitHub/tacred_odin/src/main/resources/data/test.json'))
 
     candidates = defaultdict(list)
 
