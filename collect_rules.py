@@ -46,12 +46,13 @@ def trigger_stats(candidates, origin, model_output):
     subjects = defaultdict(list)
     objects = defaultdict(list)
     lineid2rule = defaultdict(dict) 
+    ans = defaultdict(int)
     for i, item in enumerate(model_output):
         g, e = build_graph(origin[i])
         tokens = ['ROOT'] + origin[i]['token']
         postags = ['ROOT'] + origin[i]['stanford_pos']
         if item['predicted_label'] != 'no_relation':
-            if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
+            if len(item['predicted_tags']) != 0:
                 c += 1
                 subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
                 obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
@@ -66,6 +67,7 @@ def trigger_stats(candidates, origin, model_output):
                         tag = "NN*"
                     else:
                         tag = postags[j]
+                    ans[tag] += 1
                     if tag in d[item['predicted_label']]:
                         d[item['predicted_label']][tag] += 1
                     else:
@@ -82,12 +84,14 @@ def trigger_stats(candidates, origin, model_output):
     # res = dict()
     # for x in d:
     #     res[x] = {k: v for k, v in sorted(d[x].items(), key=lambda item: item[1], reverse=True)[:5]}
-    ans = defaultdict(int)
-    for x in d:
-        for l in d[x]:
-            if d[x][l] >= 10:
-                ans[l] += 1
-    print (json.dumps({k: v for k, v in sorted(ans.items(), key=lambda item: item[1], reverse=True)}))
+    # ans = defaultdict(int)
+    # for x in d:
+    #     for l in d[x]:
+    #         if d[x][l] >= 10:
+    #             ans[l] += 1
+    temp = {"NN*": 185141, "VB*": 66436, "IN": 58614, "DT": 40510, ",": 33518, "JJ": 27916, "CC": 15985, ".": 14917, "CD": 14344, "PRP": 13201, "RB": 11179, "TO": 10111, "PRP$": 8930, "POS": 5278, ":": 4102, "``": 3668, "''": 3647, "MD": 2938, "-LRB-": 2907, "-RRB-": 2902, "WP": 2591, "WRB": 2077, "WDT": 1990, "JJR": 1462, "RP": 1250, "FW": 676, "JJS": 634, "$": 521, "RBR": 469, "EX": 288, "SYM": 244, "RBS": 194, "WP$": 144, "PDT": 110, "UH": 56, "#": 54, "LS": 5}
+    for k in temp:
+        print (ans[k])
 
 def rules_with_out_golds(candidates, origin, model_output):
     # In this case, we do not have access to the gold labels, so we are relying on predicted labels
@@ -104,7 +108,7 @@ def rules_with_out_golds(candidates, origin, model_output):
         else:
             subj_type = 'ORGANIZATION'
         if item['predicted_label'] != 'no_relation' and subj_type == origin[i]['subj_type']:#== item['gold_label']:#
-            if len(item['predicted_tags']) != 0 and len(item['gold_tags']) == 0:
+            if len(item['predicted_tags']) != 0 and len(item['gold_tags']) != 0:
                 subj = list(range(origin[i]['subj_start']+1, origin[i]['subj_end']+2))
                 obj = list(range(origin[i]['obj_start']+1, origin[i]['obj_end']+2))
                 triggers = [j+1 for j, w in enumerate(origin[i]['token']) if j in item['predicted_tags'] and j+1 not in subj and j+1 not in obj]
@@ -263,7 +267,7 @@ def save_rule_dict(candidates, subjects, objects, name):
 
 if __name__ == "__main__":
 
-    model_output = json.load(open('output_tagging_01_test_best_model.json'))
+    model_output = json.load(open('output_00_test_best_model.json'))
     origin = json.load(open('/Users/zheng/Documents/GitHub/tacred_odin/src/main/resources/data/test.json'))
 
     candidates = defaultdict(list)
